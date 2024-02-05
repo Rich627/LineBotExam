@@ -3,6 +3,7 @@ from bs4 import BeautifulSoup as bs
 import os 
 import re 
 import boto3
+from boto3.dynamodb.conditions import Key
 
 class Card:
     """ 
@@ -30,22 +31,22 @@ class Card:
 
 
 class CardList:
-    def __init__(self, bucket_name) -> None:
-        self.s3_client = boto3.client('s3')
-        self.bucket_name = bucket_name
-        self.__page_soup_list = self.__init_soup(self.__get_list_of_html())
-        self.cards_list = []
+    def __init__(self, table_name) -> None:
+        self.dynamodb = boto3.resource('dynamodb')
+        self.table = self.dynamodb.Table(table_name)
+        self.cards_list = self.__get_all_cards()
 
-        for page_soup in self.__page_soup_list:
-            cards_on_page = self.__get_all_cards(page_soup)
-            for card in cards_on_page:
-                self.cards_list.append(card)
-
-    def __get_list_of_html(self) -> list:
-        """Get HTML file names from S3 bucket"""
-        objects = self.s3_client.list_objects_v2(Bucket=self.bucket_name)['Contents']
-        html_files = [obj['Key'] for obj in objects if obj['Key'].endswith('.html')]
-        return html_files
+    def __get_all_cards(self):
+        """從DynamoDB表中讀取所有卡片數據。"""
+        response = self.table.scan()
+        cards = []
+        for item in response['Items']:
+            question = item['question']
+            answers = item['answers']
+            correct_answer = item['correct_answer']
+            question_number = item['question_number']
+            cards.append(Card(question, answers, correct_answer, question_number))
+        return cards
 
     def __init_soup(self, html_list: list):
         """Creates a list of BeautifulSoup objects for each HTML file"""
@@ -56,22 +57,18 @@ class CardList:
             soup_list.append(soup)
         return soup_list
 
-    def __get_all_cards(self, page_soup):
+    def __get_all_cards(self):
         """ 
-            Returns all cards (one question, 4 answers and one correct answer) that 
-            are on a page.
+        從DynamoDB表中讀取所有卡片數據。
         """
-        # card_bodies = page_soup.find_all("div", attrs={'class': "card-body question-body"})  # the four card bodies on the page
-        card_bodies = page_soup.find_all("div", attrs={'class': "card exam-question-card"})  # the four card bodies on the page
-
+        response = self.table.scan()
         cards = []
-        for card_body in card_bodies:
-            question = self.__get_question(card_body)
-            answers = self.__get_answers(card_body)
-            correct_answer = self.__get_correct_answer(card_body)
-            question_number = self.__get_question_number(card_body)
+        for item in response['Items']:
+            question = item['question']
+            answers = item['answers']
+            correct_answer = item['correct_answer']
+            question_number = item['question_number']
             cards.append(Card(question, answers, correct_answer, question_number))
-
         return cards
 
 
@@ -160,6 +157,6 @@ class CardList:
 
     def get_cards(self) -> list:
         """ 
-            Getter for the lsit of cards    
+        返回卡片列表
         """
         return self.cards_list

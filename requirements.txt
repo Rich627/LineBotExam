@@ -1,4 +1,4 @@
 beautifulsoup4
-line-bot-sdk
-flask
 boto3
+line-bot-sdk
+awscli
