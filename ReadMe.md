@@ -1,99 +1,55 @@
-# ExamTopics Scraper & Quiz Creator
+# AWS Quiz Bot 專案
 
-## What is this?
-This is a Python-built CLI quiz for quizzes from ExamTopics. 
-It gets questions from pages (saved locally as HTML at the moment),
-shuffles them, you pick answers and then you are shown a 
-final score and then questions you got wrong are 
-written in a `.txt` file. Correct answers are taken from the
-discussions.
+AWS Quiz Bot是一個基於AWS服務構建的互動式測驗應用，它利用LINE Messaging API和AWS DynamoDB來創建和管理測驗問題，以及追蹤用戶的狀態和進度。
 
-It looks like this (example from the Google ACE exam, obviously
-without the red markings):
+## 專案結構
 
-![how_it_looks](https://i.imgur.com/7VED0g3.png)
+- **Lambda函數**：處理LINE消息事件，管理用戶狀態，並與DynamoDB交互。
+- **DynamoDB表**：
+  - `QuizQuestions`：存儲測驗問題、選項和正確答案。
+  - `UserStates`：追蹤用戶的答題狀態和測驗完成情況。
 
-## ⚠️ READ BEORE YOU START
-This was initially tested on Windows and seems to work alright on this OS.
+## 配置
 
-⚠️ As tested, saving a page with CTRL+s in ChromeOS does not save it
-in HTML by default, as needed by the application. In the dropdown 
-menu, you have to select "Webpage, HTML Only".
+### 前提條件
 
-![html_only](https://i.imgur.com/87YOG3U.png)
+- AWS賬號
+- LINE Developers賬號
+- Python 3.11
 
+### 環境變量
 
-## How do I get it working?
-*Note for ACE: If you want the quiz for **Google Associate Cloud Engineer**, you can get the needed HTML file 
-[here](https://drive.google.com/file/d/1Iu-Zg7NzzqwxW2k-NTW1k9XG3u0IPu1U/view?usp=sharing). 
-Just unzip the archive and put it in a directory named `res`
-in the ExamTopicsQuizMaker directory AFTER you clone it and jump to step 6.*
+- `CHANNEL_ACCESS_TOKEN`：您的LINE頻道訪問令牌。
+- `CHANNEL_SECRET`：您的LINE頻道密鑰。
 
-1. Clone the repository with `git clone https://github.com/awfulwaffle77/ExamTopicsQuizMaker.git`
-or by going in the upper part of the page, clicking Code > Download ZIP (and unzip the archive)
-2. Create a new directory in the directory of the repository(inside ExamTopicsQuizMaker), 
-named `res` 
-3. Go to the exam page that you want 
-(ex. https://www.examtopics.com/exams/google/associate-cloud-engineer/view/)
-4. CTRL+s to save the page. It has to be HTML. Save it in the `res` directory
-5. Repeat for all pages in the exam
+### DynamoDB表格
 
-The structure of the folder should now be:
+#### `QuizQuestions`
 
-📁ExamTopicsQuizMaker \
-&ensp;|-> 📄 main.py \
-&ensp;|-> 📄 requirements \
-&ensp;|-> 📄 quiz.py \
-&ensp;|-> 📄 _classes.py \
-&ensp;|-> 📁 res \
-&emsp;|-> 📄 all pages needed, in HTML format 
+- **QuestionID**：問題的唯一標識符（數字型）。
+- **CorrectAnswer**：問題的正確答案選項（字串型）。
+- **Options**：包含所有選項的映射（映射型）。
+- **Question**：問題的描述（字串型）。
 
-6. Install requirements with `pip install -r requirements`
-7. Run `main.py` with `python main.py` or however your python3
-command is called
-8. Choose how many questions you want per run. This is if you want to
-have a set of only n question before finishing and checking for wrong
-questions, where n is the number you choose
-9. Choose if you want the correct answer shown immediately after 
-giving an answer or choose "no" if you want  to only check the file 
-at the end of the quiz (a file is generated anyway)
-10. Answer the questions
-11. Review the .txt file that has been created when you have started
-the quiz
+#### `UserStates`
 
-## Steps with images
-Create the `res` directory after cloning the repository
+- **UserID**：用戶的唯一標識符（字串型）。
+- **HasAnswered**：標記用戶是否已經回答了問題（布爾型）。
+- **QuizCompleted**：標記用戶是否完成了測驗（布爾型）。
 
-![step1](https://i.imgur.com/78xsRjX.png)
+## 部署
 
-Go to the exam page and save it 
+1. 將Lambda函數代碼部署到AWS Lambda。
+2. 設置Lambda函數的環境變量。
+3. 在DynamoDB中創建`QuizQuestions`和`UserStates`表格。
+4. 在LINE Developers控制台配置Webhook URL。
 
-![step2](https://i.imgur.com/4hOW8c0.png)
+## 使用
 
-How the `res` directory should look after saving all the needed pages
+用戶通過發送消息給LINE Bot來開始或繼續他們的測驗。Bot會根據用戶的當前狀態回復適當的問題或反饋。
 
-![step3](https://i.imgur.com/mEATsMZ.png)
+## 功能
 
-Run `main.py` & get your quizzes done!
-
-![step4](https://i.imgur.com/qpZ2r3N.png)
-
-## Can't you automate these steps?
-Yes and no. Due to the fact that ExamTopics uses a *lot* of captchas, 
-this automation process would be accessible to people with contributor
-access, as that disables captchas.
-
-## Status
-At this moment (5th of May 2022):
-- scraping is done correctly from the HTML of ExamTopics pages.
-- quizzes seem to be looking fine
-
-## Bug reports
-If you encounter any type a bug, please let me know by creating an 
-[issue](https://github.com/awfulwaffle77/ExamTopicsQuizMaker/issues/new).
-
-## Types of questions
-I am aware that there is at least one question with multiple answers. To
-answer those questions you have to write both answers concatenated, 
-without space. For example, if the correct answers are `B` and `E`, you
-have to write `BE`. 
+- **開始測驗**：用戶發送"start quiz"開始測驗。
+- **答題**：用戶回答問題，Bot根據答案的正確性給予反饋。
+- **測驗進度**：追蹤用戶的答題狀態和測驗完成情況。
