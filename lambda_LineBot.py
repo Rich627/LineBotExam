@@ -68,7 +68,7 @@ def send_first_question(user_id, reply_token):
         if question_item:
             question_text = question_item['Question']
             options = question_item['Options']
-            options_text = "\n".join([f"{key}: {value}" for key, value in options.items()])
+            options_text = "\n".join([value for value in options.values()])
             update_user_state(user_id, question_item['QuestionID'], False)
             line_bot_api.reply_message(
                 reply_token, [
@@ -97,7 +97,7 @@ def send_next_question(user_id, next_question_id):
         update_user_state(user_id, next_question_id, False, False)
         question_text = next_question['Question']
         options = next_question['Options']
-        options_text = "\n".join([f"{key}: {value}" for key, value in options.items()])
+        options_text = "\n".join([value for value in options.values()])
         
         line_bot_api.push_message(
             user_id, [
