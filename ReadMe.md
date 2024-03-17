@@ -2,6 +2,9 @@
 
 AWS Quiz Bot是一個基於AWS服務構建的互動式測驗應用，它利用LINE Messaging API和AWS DynamoDB來創建和管理測驗問題，以及追蹤用戶的狀態和進度。
 
+## 架構圖
+![架構圖](https://github.com/Rich627/LineBotExam/blob/main/architecture.png)
+
 ## 專案結構
 
 - **Lambda函數**：處理LINE消息事件，管理用戶狀態，並與DynamoDB交互。
